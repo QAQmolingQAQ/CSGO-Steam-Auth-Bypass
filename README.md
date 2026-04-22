@@ -63,6 +63,7 @@ retn
 
 本项目采用 [MIT 许可证](LICENSE)。
 
+## 🙇‍ 致谢
 感谢以下项目提供思路
 https://github.com/vanz666/NoLobbyReservation
 https://github.com/eonexdev/csgo-sv-fix-engine
