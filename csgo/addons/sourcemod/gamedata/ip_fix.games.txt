@@ -1,0 +1,32 @@
+"Games"
+{
+    "csgo"
+    {
+        "Keys"
+        {
+            // 需要写入的新字节：mov eax, 1; retn
+            "IPValidationBypass_Patch"
+            {
+                "windows"   "B8 01 00 00 00 C3"
+            }
+            // 用于验证的原始字节：push ebp; mov ebp, esp; sub esp, 48h
+            // 此部分可选，但建议保留以确保补丁应用于正确的位置
+            "IPValidationBypass_Check"
+            {
+                "windows"   "55 8B EC 83 EC 48"
+            }
+        }
+        "Offsets"
+        {
+            // 补丁的绝对虚拟地址（VA）
+            "IPValidationBypass_Patch"
+            {
+                "windows"   "0x101BEFA0"
+            }
+            "IPValidationBypass_Check"
+            {
+                "windows"   "0x101BEFA0"
+            }
+        }
+    }
+}
