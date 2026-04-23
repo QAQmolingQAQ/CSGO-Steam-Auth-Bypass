@@ -1,60 +1,38 @@
-# csgo-ip-validation-bypass
-Bypass CS:GO (Legacy) IP validation for servers behind NAT/FRP using SourceMod memory patching.
+# CS:GO Steam Auth Bypass
 
-# CS:GO IP Validation Bypass (IP验证绕过)
+绕过 CS:GO 服务器的 Steam 认证失败断开连接检测。适用于通过 FRP/NAT 穿透的社区服务器。
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+## 适用场景
 
-## 📖 简介
+- 使用 FRP/ngrok 等内网穿透工具搭建的 CS:GO 服务器
+- 客户端通过公网连接时被服务器踢出，提示 `Client dropped by server`
+- 服务器日志出现 `STEAMAUTH: Client ... received failure code 10`
 
-当 CS:GO（Legacy 版本）服务器**没有公网 IP**，通过内网穿透（如 FRP、NPS）或 NAT 对外提供服务时，客户端连接会被拒绝，并在服务端控制台出现 `STEAM validation rejected` 错误。
+## 原理
 
-这是因为 Valve 的引擎会校验客户端报告的 IP 地址与实际连接 IP 是否一致。内网穿透导致两者不一致，从而触发拒绝。
+CS:GO 服务器在客户端连接时，会向 Steam 验证客户端的 IP 地址。当通过 FRP 等工具穿透时，服务器看到的客户端 IP 与实际 IP 不一致，导致 Steam 返回 `Failure code 10`，服务器主动断开连接。
 
-本项目通过**内存补丁**的方式，修改 `engine.dll` 中的验证函数，使其始终返回成功，从而绕过此 IP 校验。
+本插件通过修改 `engine.dll` 中的 Steam 认证回调逻辑，将认证失败分支的 `jz`（条件跳转）改为 `jmp`（无条件跳转），使认证失败时仍然走成功分支，从而绕过断开连接。
 
-> ⚠️ **警告**：本项目**仅适用于社区服务器**。严禁在任何受 VAC 保护的官方服务器上使用，否则可能导致封禁。
+## 技术细节
 
-## 🔧 工作原理
+| 项目 | 值 |
+| :--- | :--- |
+| 目标文件 | `engine.dll` |
+| 目标函数 | `ValidateAuthTicketResponse_t` 回调 |
+| 函数特征码 | `\x55\x8B\xEC\x83\xE4\xF8\x81\xEC\x24\x02\x00\x00\x53\x56\x8B\xF1\x57` |
+| 修改偏移 | `+0x8D` |
+| 原始字节 | `74`（`jz`） |
+| 补丁字节 | `EB`（`jmp`） |
 
-通过逆向工程定位到 `engine.dll` 中的核心验证函数 `sub_101BEFA0`。该函数在执行一系列检查（包括 IP 一致性）后返回布尔值（1=成功，0=失败）。
+## 安装
 
-本项目使用 SourceMod 插件，在服务器启动时动态将该函数的开头指令替换为：
-```assembly
-mov eax, 1    ; 直接返回 1 (成功)
-retn
-```
-从而完全跳过其内部的 IP 检查逻辑。
-
-## 🧠 逆向工程思路（方法论）
-
-如果你需要在其他版本上复现此方法，或者对其他验证逻辑进行绕过，可参考以下思路：
-
-1. **定位失败日志**：在 IDA Pro 中加载 `engine.dll`，搜索字符串 `"STEAM validation rejected"`。
-2. **追溯调用链**：通过交叉引用找到引用该字符串的函数，通常是一个失败处理分发函数（如 `sub_101BEDD0`）。
-3. **继续向上追溯**：对该失败处理函数进行交叉引用，找到其调用者。在调用者中寻找 `call` 到验证函数后紧跟 `test al, al` 或 `test eax, eax` 以及条件跳转的代码模式。
-4. **识别核心验证函数**：在上述模式中被 `call` 的那个函数（本例中为 `sub_101BEFA0`）就是我们要 Patch 的目标。
-5. **制定 Patch**：修改该函数的开头，使其直接返回成功（`mov eax, 1; retn`）。
-
-
-## 🚀 安装与使用
-
-### 要求
-- SourceMod 1.10 或更高版本。
-- 仅适用于 **CS:GO (Legacy 版本)**。
-
-### 步骤
-
-1. 将 `ip_fix.smx` 放入服务器的 `csgo/addons/sourcemod/plugins/` 目录。
-2. 将 `ip_fix.games.txt` 放入服务器的 `csgo/addons/sourcemod/gamedata/` 目录。
-3. 重启服务器，或在控制台执行 `sm plugins load ip_fix`。
-
-### 验证
-
-- 在服务器控制台输入 `sm plugins list`，应看到 `ip_fix.smx` 状态为 **Loaded**。
-- 观察服务器日志，没有 `STEAM validation rejected` 相关的错误输出。
-- 让内网穿透环境下的朋友尝试连接，应能成功进入服务器。
-
+1. 将 `ip_fix.games.txt` 放入 `csgo/addons/sourcemod/gamedata/`
+2. 将 `ip_fix.sp` 放入 `csgo/addons/sourcemod/scripting/`
+3. 编译插件：
+   ```bash
+   cd csgo/addons/sourcemod/scripting
+   spcomp ip_fix.sp -o ../plugins/ip_fix.smx
 ## ⚠️ 免责声明
 
 本项目仅供学习交流使用，旨在解决社区服务器在内网穿透环境下的技术限制。**请勿在 Valve 官方服务器上使用**。使用者需自行承担因违反相关规定而导致的一切后果。
