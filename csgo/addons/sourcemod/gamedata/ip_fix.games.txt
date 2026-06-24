@@ -7,6 +7,7 @@
             "AuthBypass_Patch"
             {
                 "windows"   "EB"
+                "linux"   "909090909090"
             }
         }
         
@@ -15,6 +16,7 @@
             "AuthBypass_Patch"
             {
                 "windows"   "0x8D"
+                "linux"    "0x34"
             }
         }
 
@@ -23,6 +25,10 @@
             "AuthFailureCallback"
             {
                 "windows"
+                {
+                    "signature" "AuthFailureCallback"
+                }
+                "linux"
                 {
                     "signature" "AuthFailureCallback"
                 }
@@ -35,6 +41,7 @@
             {
                 "library"   "engine"
                 "windows"   "\x55\x8B\xEC\x83\xE4\xF8\x81\xEC\x24\x02\x00\x00\x53\x56\x8B\xF1\x57"
+                "linux"     "\x55\x89\xE5\x57\x89\xC7\x56\x89\xD6\x53\x81\xEC\x44\x02\x00\x00"
             }
         }
     }
