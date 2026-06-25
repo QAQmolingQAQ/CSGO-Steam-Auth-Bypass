@@ -2,6 +2,8 @@
 
 绕过 CS:GO 服务器的 Steam 认证失败断开连接检测。适用于通过 FRP/NAT 穿透的社区服务器。
 
+插件名称和功能不太一样是因为立项时是打算处理ip验证不同导致的断开连接，后面发现，如果走失败分支，有可能会使其他插件获取不到用户数据，便一刀切，直接使服务端不理会steam验证，但本地的验证仍然在，服务器仍有vac安全的标签，如果客户端以不安全模式启动，会被客户端自己拦截，(但是开挂的，多开等不安全行为不会被服务器拦截)。
+
 ## 适用场景
 
 - 使用 FRP/ngrok 等内网穿透工具搭建的 CS:GO 服务器
@@ -13,6 +15,8 @@
 CS:GO 服务器在客户端连接时，会向 Steam 验证客户端的 IP 地址。当通过 FRP 等工具穿透时，服务器看到的客户端 IP 与实际 IP 不一致，导致 Steam 返回 `Failure code 10`，服务器主动断开连接。
 
 本插件通过修改 `engine.dll` 中的 Steam 认证回调逻辑，将认证失败分支的 `jz`（条件跳转）改为 `jmp`（无条件跳转），使认证失败时仍然走成功分支，从而绕过断开连接。
+
+由f05tN1ko提供linux的engine.so的gamedata偏移量，他让steam服务验证失败时的跳转到失败处理的函数的跳转失效，消除跳转，顺延执行，继续执行验证成功后的路径
 
 ## 技术细节
 
@@ -31,8 +35,7 @@ CS:GO 服务器在客户端连接时，会向 Steam 验证客户端的 IP 地址
 2. 将 `ip_fix.sp` 放入 `csgo/addons/sourcemod/scripting/`
 3. 编译插件：
    ```bash
-   cd csgo/addons/sourcemod/scripting
-   spcomp ip_fix.sp -o ../plugins/ip_fix.smx
+   将ip_fix.sp拖入csgo\addons\sourcemod\scripting\compile.exe，会在csgo\addons\sourcemod\scripting\compiled文件夹下生成ip_fix.smx插件，移动到csgo\addons\sourcemod\plugins文件夹下就行
 ## ⚠️ 免责声明
 
 本项目仅供学习交流使用，旨在解决社区服务器在内网穿透环境下的技术限制。**请勿在 Valve 官方服务器上使用**。使用者需自行承担因违反相关规定而导致的一切后果。
