@@ -34,8 +34,9 @@ CS:GO 服务器在客户端连接时，会向 Steam 验证客户端的 IP 地址
 1. 将 `ip_fix.games.txt` 放入 `csgo/addons/sourcemod/gamedata/`
 2. 将 `ip_fix.sp` 放入 `csgo/addons/sourcemod/scripting/`
 3. 编译插件：
-   ```bash
-   将ip_fix.sp拖入csgo\addons\sourcemod\scripting\compile.exe，会在csgo\addons\sourcemod\scripting\compiled文件夹下生成ip_fix.smx插件，移动到csgo\addons\sourcemod\plugins文件夹下就行
+   将ip_fix.sp拖入csgo\addons\sourcemod\scripting\compile.exe，
+   会在csgo\addons\sourcemod\scripting\compiled文件夹下生成ip_fix.smx插件，
+   移动到csgo\addons\sourcemod\plugins文件夹下就行
 ## ⚠️ 免责声明
 
 本项目仅供学习交流使用，旨在解决社区服务器在内网穿透环境下的技术限制。**请勿在 Valve 官方服务器上使用**。使用者需自行承担因违反相关规定而导致的一切后果。
