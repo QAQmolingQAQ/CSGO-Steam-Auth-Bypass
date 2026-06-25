@@ -7,8 +7,8 @@ public Plugin myinfo =
 {
     name = "CS:GO Steam Auth Bypass",
     author = "QAQmolingQAQ",
-    description = "Bypass Steam auth failure (Code 10) disconnect for FRP connections",
-    version = "1.2",
+    description = "Bypass Steam auth failure",
+    version = "1.3",
     url = "https://github.com/QAQmolingQAQ/CSGO-Steam-Auth-Bypass"
 };
 
@@ -71,9 +71,9 @@ mem_patch g_AuthBypassPatch;
 
 public void OnPluginStart()
 {
-    GameData conf = new GameData("ip_fix.games");
+    GameData conf = new GameData("CSGO_Steam_Auth_Bypass.games");
     if (!conf) 
-        SetFailState("Failed to load ip_fix gamedata");
+        SetFailState("Failed to load CSGO Steam Auth Bypass gamedata");
     
     Address authCallbackAddr = conf.GetAddress("AuthFailureCallback");
     if (!authCallbackAddr)
