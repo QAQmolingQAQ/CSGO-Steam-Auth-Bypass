@@ -15,7 +15,7 @@ When a CS:GO (Legacy) server **lacks a public IP** and is exposed via NAT or tun
 
 This occurs because the Valve engine validates that the client's reported IP address matches the actual connection IP. Tunneling causes a mismatch, triggering the rejection.
 
-This project uses **memory patching** to modify the validation function inside `engine.dll`, forcing it to always return success, thereby bypassing the IP check.
+This project uses **memory patching** to modify the validation function inside `engine.dll`, forcing it to always return success.
 
 > ⚠️ **Warning**: This project is **intended for community servers only**. Do NOT use on any VAC-secured official server, as it may result in a ban.
 
@@ -23,18 +23,35 @@ This project uses **memory patching** to modify the validation function inside `
 
 ## 🔧  How It Works
 
+When a client connects, the CS:GO server validates the client's IP address with Steam. Behind FRP/NAT, the IP seen by the server differs from the actual client IP, causing Steam to return `Failure code 10`, and the server actively disconnects the client.
 
+This plugin modifies the Steam authentication callback logic in `engine.dll` by changing the conditional jump (`jz`) on the authentication failure branch to an unconditional jump (`jmp`). This forces the server to follow the success path even when authentication fails, effectively bypassing the disconnect.
 
-Through reverse engineering, the core validation function `sub_101BEFA0` inside `engine.dll` was located. This function performs a series of checks (including IP consistency) and returns a boolean (1 = success, 0 = failure).
-
-This project uses a SourceMod plugin to dynamically replace the function's prologue with:
+Linux `engine.so` gamedata offsets were provided by **f05tN1ko**. The Linux patch neutralizes the jump to the failure handler by replacing it with NOPs, allowing execution to fall through and continue along the success path.
 
 ```assembly
 mov eax, 1    ; Return 1 (success) immediately
 retn
 ```
+## Technical Details
 
-This completely bypasses the internal IP check logic.
+| Item | Value |
+| :--- | :--- |
+| Target File | `engine.dll` |
+| Target Function | `ValidateAuthTicketResponse_t` callback |
+| Function Signature | `\x55\x8B\xEC\x83\xE4\xF8\x81\xEC\x24\x02\x00\x00\x53\x56\x8B\xF1\x57` |
+| Patch Offset | `+0x8D` |
+| Original Bytes | `74` (`jz`) |
+| Patch Bytes | `EB` (`jmp`) |
+
+## Installation
+
+1. Place `ip_fix.games.txt` into `csgo/addons/sourcemod/gamedata/`
+2. Place `ip_fix.sp` into `csgo/addons/sourcemod/scripting/`
+3. Compile the plugin:
+   Drag `ip_fix.sp` onto `csgo\addons\sourcemod\scripting\compile.exe`.
+   The compiled `ip_fix.smx` will be generated in `csgo\addons\sourcemod\scripting\compiled`.
+   Move it to `csgo\addons\sourcemod\plugins`.
 
 ---
 
@@ -51,30 +68,6 @@ If you need to reproduce this method on other versions or bypass different valid
 ---
 
 
-## 🚀 安装与使用 / Installation & Usage
-
-### Requirements
-
-- SourceMod 1.10  or higher
--  Only for **CS:GO (Legacy version)**
-
-###  Steps
-
-1.  *Place `ip_fix.smx` into the server's `csgo/addons/sourcemod/plugins/` directory.*
-
-2. *Place `ip_fix.games.txt` into the server's `csgo/addons/sourcemod/gamedata/` directory.*
-
-3. *Restart the server, or run `sm plugins load ip_fix` in the console.*
-
-### Verification
-
-- *Run `sm plugins list` in the server console; `ip_fix.smx` should show as **Loaded**.*
-
-- *Check server logs—no `STEAM validation rejected` errors should appear.*
-
-- *Have a friend behind NAT/FRP try to connect; they should succeed.*
-
----
 
 ## ⚠️  Disclaimer
 
